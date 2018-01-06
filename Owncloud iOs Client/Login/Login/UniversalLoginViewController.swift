@@ -134,15 +134,15 @@ public enum TextfieldType: String {
         let enabledEditUrlUsernamePassword : Bool = (self.loginMode == .create || self.loginMode == .migrate)
         self.textFieldURL.isEnabled = enabledEditUrlUsernamePassword
         self.textFieldURL.isUserInteractionEnabled = enabledEditUrlUsernamePassword
-        self.textFieldUsername.isEnabled = enabledEditUrlUsernamePassword
-        self.textFieldUsername.isUserInteractionEnabled = enabledEditUrlUsernamePassword
-
+        self.textFieldUsername.isEnabled = true
+        self.textFieldUsername.isUserInteractionEnabled = true
 
         self.setBrandingStyle()
         
         self.initUI()
         
         self.oAuth2Manager.trustedCertificatesStore = SSLCertificateManager()
+        
         if self.loginMode == .update {
             self.setReconnectionButtons(hiddenStatus: true)
             self.setURLFooter(isType: .None)
@@ -159,10 +159,6 @@ public enum TextfieldType: String {
         
         self.removeNotificationsAboutKeyboard()
         
-        if self.loginMode == .update || self.loginMode == .migrate {
-            UtilsCookies.deleteCurrentSystemCookieStorageAndRestoreTheCookiesOfActiveUser()
-
-        }
     }
     
     public override func viewDidLayoutSubviews() {
@@ -398,6 +394,11 @@ public enum TextfieldType: String {
                 self.textFieldURL.text = UtilsUrls.getFullRemoteServerPath(self.user)
             }
             
+            if (self.loginMode == .expire && (self.user?.username == nil || self.user?.username == "") ) {
+                self.user = ManageUsersDB.getActiveUser()
+                let app: AppDelegate = (UIApplication.shared.delegate as! AppDelegate)
+                app.activeUser = self.user;
+            }
             self.textFieldUsername.text = self.user?.username
             self.textFieldPassword.text = ""
         }
