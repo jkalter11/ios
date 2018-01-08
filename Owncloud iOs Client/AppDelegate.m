@@ -128,7 +128,6 @@ float shortDelay = 0.3;
     _isLoadingVisible = NO;
     _isOverwriteProcess = NO; //Flag for detect if a overwrite process is in progress
     _isPasscodeVisible = NO;
-    _isNewUser = NO;
     
     [self moveIfIsNecessaryFilesAfterUpdateAppFromTheOldFolderArchitecture];
     
@@ -2815,8 +2814,6 @@ float shortDelay = 0.3;
 
             //we create the user folder to have multiuser
             [UtilsFileSystem createFolderForUser:user];
-            
-            self.isNewUser = YES;
             
             ManageAccounts *manageAccounts = [ManageAccounts new];
             [manageAccounts updateDisplayNameOfUserWithUser:user];
