@@ -390,17 +390,25 @@ public enum TextfieldType: String {
         
         if self.loginMode != .create {
             
-            if self.loginMode != .migrate {
-                self.textFieldURL.text = UtilsUrls.getFullRemoteServerPath(self.user)
-            }
-            
             if (self.loginMode == .expire && (self.user?.username == nil || self.user?.username == "") ) {
                 self.user = ManageUsersDB.getActiveUser()
-                let app: AppDelegate = (UIApplication.shared.delegate as! AppDelegate)
-                app.activeUser = self.user;
+                
+                if (self.user?.credDto != nil && self.user?.credDto.userName != nil
+                    && self.user?.credDto.userName != "") {
+                    let app: AppDelegate = (UIApplication.shared.delegate as! AppDelegate)
+                    app.activeUser = self.user;
+                } else {
+                    //can not get credentials from keychain
+                    //OCKeychain.resetKeychain()
+                    //TODO:expire all accounts and force migration
+                }
             }
             self.textFieldUsername.text = self.user?.username
             self.textFieldPassword.text = ""
+            
+            if self.loginMode != .migrate {
+                self.textFieldURL.text = UtilsUrls.getFullRemoteServerPath(self.user)
+            }
         }
         
         //auto launch check of URL
@@ -888,19 +896,25 @@ public enum TextfieldType: String {
             if (listOfFileDtos != nil && !((listOfFileDtos?.isEmpty)!)) {
                 /// credentials allowed access to root folder: well done
                 
-                let tryingToUpdateDifferentUser = (self.user != nil && (self.loginMode == .update || self.loginMode == .expire) && credentials.userName != self.user?.username)
+                let tryingToUpdateDifferentUser = (self.user != nil &&
+                    (self.loginMode == .update || self.loginMode == .expire)
+                    && self.user?.username != nil
+                    && self.user?.username != ""
+                    && credentials.userName != self.user?.username)
                 
-                if tryingToUpdateDifferentUser {
-                    //Delete current wrong cookies and relaunch check url to get correct ones
+                let errorGettingCredFromKeychain = (self.loginMode == .expire &&
+                    (self.user?.username == nil || self.user?.username == "") )
+                
+                if (tryingToUpdateDifferentUser) {
+                    //Delete current wrong cookies
                     UtilsFramework.deleteAllCookies()
                     self.showCredentialsError(NSLocalizedString("credentials_different_user", comment: "") )
                     
                 } else {
 
-                    
-                    if self.loginMode == .create || self.loginMode == .migrate {
+                    if self.loginMode == .create || self.loginMode == .migrate || errorGettingCredFromKeychain {
                         let newUser = UserDto()
-                        if self.loginMode == .migrate {
+                        if self.loginMode != .create {
                             newUser.userId = self.user!.userId
                             newUser.predefinedUrl = k_default_url_server
                         }
@@ -939,11 +953,19 @@ public enum TextfieldType: String {
                         
                      } else {
                         
-                        ManageAccounts().updateAccountOfUser(self.user!, withCredentials: credentials)
+                        if ( (self.user?.username == nil || self.user?.username == "")
+                            && credentials.userName != nil ){
+                            self.user?.username = credentials.userName
+                        }
+                        
                         if (app.activeUser != nil && app.activeUser.userId == self.user?.userId) {
                             app.activeUser = self.user;
                         }
-
+                        
+                        ManageAccounts().updateAccountOfUser(self.user!, withCredentials: credentials)
+                        
+                      
+                        
                         if self.loginMode == .migrate {
                             // migration mode needs to start a fresh list of files, so that it is updated with the new URL
                             app.generateAppInterface(fromLoginScreen: true)

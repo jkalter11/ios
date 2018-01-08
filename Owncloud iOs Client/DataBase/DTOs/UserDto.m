@@ -129,7 +129,7 @@
     
     if (self.credDto.userDisplayName == nil || [self.credDto.userDisplayName isEqualToString:@""]) {
         
-        if (self.username != nil || [self.username isEqualToString:@""]) {
+        if (self.username == nil || [self.username isEqualToString:@""]) {
             OCCredentialsDto *credDto = [OCKeychain getCredentialsOfUser:self];
             self.username = credDto.userName;
             self.credDto = [credDto copy];
